@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Settings & Configuration – SmartBiz AI Platform{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">System Settings & AI Configuration</h3>
+        <p class="text-muted small mb-0">Configure automation confidence thresholds, AI service connections, and demo workspace controls</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- LEFT COLUMN: THRESHOLDS & AI ENGINE -->
+    <div class="col-12 col-lg-6">
+        <!-- Automation Thresholds Card -->
+        <div class="card border-0 shadow-xs rounded-3 mb-4">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-sliders text-primary me-2"></i> Automation Confidence Thresholds</h6>
+            </div>
+            <div class="card-body p-4">
+                <form action="{{ url_for('settings.update_thresholds') }}" method="POST">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label small fw-semibold text-dark mb-0">Auto-Process Threshold (%)</label>
+                            <span class="badge bg-success fw-bold font-monospace" id="autoThreshVal">{{ settings.auto_thresh }}%</span>
+                        </div>
+                        <input type="range" class="form-range" name="auto_process_threshold" min="50" max="95" step="1" value="{{ settings.auto_thresh }}" oninput="document.getElementById('autoThreshVal').innerText = this.value + '%'">
+                        <div class="form-text small text-muted">
+                            Tasks with AI confidence at or above this threshold will automatically bypass human review and process straight-through to target departments.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label small fw-semibold text-dark mb-0">Mandatory HITL Review Threshold (%)</label>
+                            <span class="badge bg-warning text-dark fw-bold font-monospace" id="reviewThreshVal">{{ settings.review_thresh }}%</span>
+                        </div>
+                        <input type="range" class="form-range" name="hitl_review_threshold" min="30" max="75" step="1" value="{{ settings.review_thresh }}" oninput="document.getElementById('reviewThreshVal').innerText = this.value + '%'">
+                        <div class="form-text small text-muted">
+                            Tasks with confidence below this score are automatically intercepted and locked in the Human-in-the-Loop queue.
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold">
+                        <i class="bi bi-save me-1"></i> Save Thresholds
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- AI Service & Connection Card -->
+        <div class="card border-0 shadow-xs rounded-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-cpu-fill text-info me-2"></i> Centralized AI Service Engine</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-muted">Active Engine Mode</label>
+                    <div class="p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="status-indicator-dot bg-success animate-pulse"></span>
+                            <div>
+                                <div class="fw-bold text-dark small">Google Gemini API / Intelligent Fallback Engine</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Configured via .env (GEMINI_API_KEY)</div>
+                            </div>
+                        </div>
+                        <span class="badge bg-success-subtle text-success">Active</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-muted">Key Status</label>
+                    <input type="text" class="form-control form-control-sm font-monospace bg-light" value="{{ settings.api_key_masked }}" readonly>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="testAiBtn" onclick="testAIConnection()">
+                        <i class="bi bi-broadcast"></i> Test AI Connection
+                    </button>
+                    <span id="testAiResult" class="small"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT COLUMN: DEMO CONTROLS & ROLE MATRIX -->
+    <div class="col-12 col-lg-6">
+        <!-- Hackathon Demo Workspace Tools -->
+        <div class="card border-0 shadow-xs rounded-3 mb-4">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-magic text-warning me-2"></i> Demo & Presentation Controls</h6>
+            </div>
+            <div class="card-body p-4">
+                <p class="small text-muted mb-3">
+                    Quickly restore standard presentation data across Invoices, Leads, Resumes, Support Tickets, and the HITL Queue for clean judging walkthroughs.
+                </p>
+                <form action="{{ url_for('dashboard.load_demo_data') }}" method="POST">
+                    <button type="submit" class="btn btn-warning btn-sm text-dark fw-semibold px-3">
+                        <i class="bi bi-arrow-repeat me-1"></i> Reset & Reload Demo Data
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Role-Based Access Matrix -->
+        <div class="card border-0 shadow-xs rounded-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-shield-lock-fill text-danger me-2"></i> Role-Based Access Matrix</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="bg-light text-muted text-uppercase">
+                            <tr>
+                                <th class="ps-3">Role</th>
+                                <th>Primary Department</th>
+                                <th>Permissions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            <tr>
+                                <td class="ps-3 fw-bold text-danger">Admin</td>
+                                <td>Global / All</td>
+                                <td>Full access to all modules, settings & HITL queues</td>
+                            </tr>
+                            <tr>
+                                <td class="ps-3 fw-bold text-success">Finance</td>
+                                <td>Finance</td>
+                                <td>Invoice processing, approvals, billing tickets</td>
+                            </tr>
+                            <tr>
+                                <td class="ps-3 fw-bold text-primary">Sales</td>
+                                <td>Sales</td>
+                                <td>Lead scoring, hot pipeline routing, product triage</td>
+                            </tr>
+                            <tr>
+                                <td class="ps-3 fw-bold text-info">HR</td>
+                                <td>Human Resources</td>
+                                <td>Job descriptions, resume screening & ranking</td>
+                            </tr>
+                            <tr>
+                                <td class="ps-3 fw-bold text-warning">Support</td>
+                                <td>Customer Support</td>
+                                <td>Support tickets, NLP classification, response approval</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function testAIConnection() {
+    const btn = document.getElementById('testAiBtn');
+    const resultSpan = document.getElementById('testAiResult');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Testing...';
+    resultSpan.innerHTML = '';
+
+    fetch('/settings/test-ai', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-broadcast"></i> Test AI Connection';
+            if (data.success) {
+                resultSpan.innerHTML = `<span class="badge bg-success-subtle text-success">${data.message}</span>`;
+            } else {
+                resultSpan.innerHTML = `<span class="badge bg-warning-subtle text-warning">${data.message}</span>`;
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-broadcast"></i> Test AI Connection';
+            resultSpan.innerHTML = `<span class="badge bg-danger-subtle text-danger">Error: ${err}</span>`;
+        });
+}
+</script>
+{% endblock %}

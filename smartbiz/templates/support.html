@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Support Ticket Automation – SmartBiz AI Platform{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">AI Support Ticket Triage & Response Generation</h3>
+        <p class="text-muted small mb-0">NLP ticket categorization, sentiment analysis, department routing, and verified customer resolution drafting</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-xs" data-bs-toggle="modal" data-bs-target="#createTicketModal">
+            <i class="bi bi-plus-circle-fill"></i> New Support Ticket
+        </button>
+    </div>
+</div>
+
+<!-- STATS CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card stat-card border-0 shadow-xs rounded-3 p-3">
+            <div class="text-muted small fw-semibold text-uppercase mb-1">Total Tickets</div>
+            <div class="h3 fw-bold text-dark mb-0">{{ total_tickets }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card border-0 shadow-xs rounded-3 p-3">
+            <div class="text-muted small fw-semibold text-uppercase mb-1">Open Queue</div>
+            <div class="h3 fw-bold text-primary mb-0">{{ open_tickets }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card border-0 shadow-xs rounded-3 p-3 {% if pending_review > 0 %}border-start border-warning border-4{% endif %}">
+            <div class="text-muted small fw-semibold text-uppercase mb-1">Pending HITL Review</div>
+            <div class="h3 fw-bold text-warning mb-0">{{ pending_review }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card border-0 shadow-xs rounded-3 p-3">
+            <div class="text-muted small fw-semibold text-uppercase mb-1">Resolved & Sent</div>
+            <div class="h3 fw-bold text-success mb-0">{{ resolved_tickets }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="card border-0 shadow-xs rounded-3 mb-4">
+    <div class="card-body p-3">
+        <div class="row g-2 align-items-center justify-content-between">
+            <div class="col-12 col-md-auto">
+                <div class="btn-group btn-group-sm" role="group">
+                    <a href="{{ url_for('support.index', category='all') }}" class="btn btn-outline-secondary {% if cat_filter == 'all' %}active{% endif %}">All Categories</a>
+                    <a href="{{ url_for('support.index', category='Billing') }}" class="btn btn-outline-secondary {% if cat_filter == 'Billing' %}active{% endif %}">Billing</a>
+                    <a href="{{ url_for('support.index', category='Technical') }}" class="btn btn-outline-secondary {% if cat_filter == 'Technical' %}active{% endif %}">Technical</a>
+                    <a href="{{ url_for('support.index', category='Account') }}" class="btn btn-outline-secondary {% if cat_filter == 'Account' %}active{% endif %}">Account</a>
+                    <a href="{{ url_for('support.index', category='Product') }}" class="btn btn-outline-secondary {% if cat_filter == 'Product' %}active{% endif %}">Product</a>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <form method="GET" action="{{ url_for('support.index') }}">
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="q" class="form-control" placeholder="Search ticket #, customer, subject..." value="{{ search_query }}">
+                        <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TICKETS TABLE -->
+<div class="card border-0 shadow-xs rounded-3 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light text-muted small text-uppercase">
+                <tr>
+                    <th class="ps-3">Ticket #</th>
+                    <th>Customer</th>
+                    <th>Subject & Summary</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Sentiment</th>
+                    <th>Routed Dept</th>
+                    <th>Status</th>
+                    <th class="pe-3 text-end">AI Response & Verification</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y small">
+                {% for t in tickets %}
+                <tr>
+                    <td class="ps-3">
+                        <span class="fw-bold text-dark font-monospace">{{ t.ticket_number }}</span>
+                        <div class="text-muted" style="font-size: 0.7rem;">{{ t.created_at.strftime('%m/%d %H:%M') if t.created_at else '' }}</div>
+                    </td>
+                    <td>
+                        <div class="fw-semibold text-dark">{{ t.customer_name }}</div>
+                        <div class="text-muted" style="font-size: 0.75rem;">{{ t.email }}</div>
+                    </td>
+                    <td style="max-width: 260px;">
+                        <div class="fw-semibold text-dark text-truncate">{{ t.subject }}</div>
+                        <div class="text-muted text-truncate" style="font-size: 0.75rem;">{{ t.description }}</div>
+                    </td>
+                    <td>
+                        <span class="badge {% if t.category == 'Billing' %}bg-success-subtle text-success{% elif t.category == 'Technical' %}bg-primary-subtle text-primary{% elif t.category == 'Account' %}bg-info-subtle text-info{% else %}bg-secondary-subtle text-secondary{% endif %} fw-semibold">
+                            {{ t.category }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge {% if t.priority == 'Critical' %}bg-danger text-white animate-pulse{% elif t.priority == 'High' %}bg-danger-subtle text-danger{% elif t.priority == 'Medium' %}bg-warning-subtle text-warning{% else %}bg-secondary-subtle text-secondary{% endif %} fw-bold">
+                            {{ t.priority }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge {% if t.sentiment == 'Negative' %}bg-danger-subtle text-danger{% elif t.sentiment == 'Positive' %}bg-success-subtle text-success{% else %}bg-light text-muted border{% endif %}">
+                            {{ t.sentiment }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark border">{{ t.department }}</span>
+                    </td>
+                    <td>
+                        <span class="badge {% if t.status == 'Resolved' %}bg-success text-white{% elif t.status == 'In Progress' %}bg-primary text-white{% elif t.status == 'Pending Review' %}bg-warning text-dark{% else %}bg-secondary text-white{% endif %}">
+                            {{ t.status }}
+                        </span>
+                    </td>
+                    <td class="pe-3 text-end">
+                        <button type="button" class="btn btn-sm {% if t.status == 'Resolved' %}btn-outline-success{% else %}btn-primary{% endif %}" data-bs-toggle="modal" data-bs-target="#ticketResponseModal{{ t.id }}">
+                            {% if t.status == 'Resolved' %}
+                            <i class="bi bi-check2-all"></i> Sent
+                            {% else %}
+                            <i class="bi bi-reply-fill"></i> Review & Send
+                            {% endif %}
+                        </button>
+
+                        <!-- Response Modal -->
+                        <div class="modal fade text-start" id="ticketResponseModal{{ t.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered modal-lg">
+                                <div class="modal-content border-0 shadow-lg rounded-4">
+                                    <div class="modal-header border-bottom p-3">
+                                        <div>
+                                            <h5 class="modal-title fw-bold">Ticket {{ t.ticket_number }}: {{ t.subject }}</h5>
+                                            <div class="small text-muted">From: {{ t.customer_name }} ({{ t.email }})</div>
+                                        </div>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body p-4">
+                                        <!-- Customer inquiry box -->
+                                        <div class="mb-3 p-3 bg-light rounded-3 border">
+                                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                                <span class="small fw-bold text-dark">Customer Inquiry:</span>
+                                                <div class="d-flex gap-1">
+                                                    <span class="badge bg-secondary-subtle text-dark">{{ t.category }}</span>
+                                                    <span class="badge bg-secondary-subtle text-dark">{{ t.priority }}</span>
+                                                    <span class="badge bg-secondary-subtle text-dark">{{ t.sentiment }} Sentiment</span>
+                                                </div>
+                                            </div>
+                                            <p class="small text-dark mb-0 font-monospace">{{ t.description }}</p>
+                                        </div>
+
+                                        <!-- AI Draft Response Form -->
+                                        <form action="{{ url_for('support.send_response', ticket_id=t.id) }}" method="POST">
+                                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                                <label class="form-label small fw-bold text-dark mb-0">
+                                                    <i class="bi bi-stars text-primary me-1"></i> AI Draft Response (Editable before dispatch)
+                                                </label>
+                                                <button type="button" class="btn btn-sm btn-link text-decoration-none small" onclick="regenerateAIResponse({{ t.id }})">
+                                                    <i class="bi bi-arrow-clockwise"></i> Regenerate AI Draft
+                                                </button>
+                                            </div>
+                                            <textarea name="ai_response" id="responseArea{{ t.id }}" class="form-control font-monospace small mb-3" rows="8" required>{{ t.ai_response }}</textarea>
+
+                                            <div class="d-flex align-items-center justify-content-between pt-3 border-top">
+                                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                <div class="d-flex gap-2">
+                                                    <button type="submit" class="btn btn-sm btn-success px-4 fw-semibold">
+                                                        <i class="bi bi-send-check-fill me-1"></i> Approve & Send Response
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center py-5 text-muted">
+                        <i class="bi bi-headset fs-1 d-block mb-2 text-muted-sidebar"></i>
+                        <h5>No support tickets found</h5>
+                        <p class="small mb-3">Create a ticket or load demo data to view automated NLP triage and response generation.</p>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createTicketModal">
+                            Create Support Ticket
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- CREATE TICKET MODAL -->
+<div class="modal fade" id="createTicketModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom p-3">
+                <h5 class="modal-title fw-bold"><i class="bi bi-ticket-detailed-fill text-primary me-2"></i> Submit Customer Support Ticket</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('support.create_ticket') }}" method="POST">
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-semibold">Customer Full Name</label>
+                            <input type="text" name="customer_name" class="form-control" placeholder="e.g. Jonathan Blake" required>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-semibold">Customer Email</label>
+                            <input type="email" name="email" class="form-control" placeholder="jblake@apexglobal.net" required>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Subject</label>
+                            <input type="text" name="subject" class="form-control" placeholder="e.g. Payment deducted twice for August subscription" required>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Complaint or Inquiry Description</label>
+                            <textarea name="description" class="form-control" rows="4" placeholder="Describe the customer issue in detail. AI will automatically detect category, priority, sentiment, and draft an empathetic response..." required></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top p-3">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary px-4 fw-semibold">
+                        Submit & AI Classify <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function regenerateAIResponse(ticketId) {
+    const area = document.getElementById('responseArea' + ticketId);
+    if (!area) return;
+    area.value = "Regenerating AI response with updated context...";
+    fetch(`/support/${ticketId}/regenerate-response`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            area.value = data.response;
+        } else {
+            alert('Error regenerating response: ' + data.error);
+        }
+    })
+    .catch(err => {
+        alert('Network error: ' + err);
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,32 @@
+ALEXANDER CHEN
+alex.chen.engineer@gmail.com | (555) 892-3341 | San Francisco, CA
+LinkedIn: linkedin.com/in/alexchen-dev | GitHub: github.com/alexchen-dev
+
+SUMMARY
+Experienced Senior Software Engineer with 6+ years specializing in Python backend systems, microservices, REST APIs, and automated business workflows. Passionate about clean system architecture and scalable cloud infrastructure.
+
+TECHNICAL SKILLS
+- Languages: Python, JavaScript(Js), TypeScript, SQL, Bash, Html, Css
+- Frameworks & Libraries: Flask, FastAPI, Django, SQLAlchemy, React, Node.js
+- Cloud & DevOps: Docker, Kubernetes, AWS (ECS, S3, RDS, Lambda), CI/CD (GitHub Actions)
+- Databases: PostgreSQL, MySQL, Redis, SQLite
+- Methodologies: Agile, Scrum, TDD, Microservices Design
+
+PROFESSIONAL EXPERIENCE
+Senior Backend Engineer | CloudFlow Technologies (2022 - Present)
+- Architected and built high-throughput REST APIs handling 5M+ daily requests using Python, Flask, and PostgreSQL.
+- Containerized legacy services with Docker and Kubernetes, reducing deployment cycle times by 45%.
+- Implemented real-time asynchronous job pipelines with Celery and Redis.
+
+Software Engineer | Apex Data Systems (2019 - 2022)
+- Developed automated data extraction scripts and ETL pipelines using Python and SQL.
+- Designed database schemas and optimized complex queries for high-volume financial transactions.
+- Collaborated with frontend engineers to deliver intuitive SaaS dashboard interfaces.
+
+EDUCATION
+Bachelor of Science in Computer Science
+University of California, Berkeley (2015 - 2019)
+
+CERTIFICATIONS
+- AWS Certified Solutions Architect - Associate
+- Professional Scrum Developer

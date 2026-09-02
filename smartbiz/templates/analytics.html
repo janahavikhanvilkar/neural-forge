@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics & Efficiency – SmartBiz AI Platform{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">System Analytics & Automation Efficiency</h3>
+        <p class="text-muted small mb-0">Quantitative operational metrics, straight-through processing rates, AI confidence distributions, and department SLAs</p>
+    </div>
+</div>
+
+<!-- TOP METRIC CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card stat-card border-0 shadow-xs rounded-3 p-3">
+            <div class="text-muted small fw-semibold text-uppercase mb-1">Total Processed Tasks</div>
+            <div class="h3 fw-bold text-dark mb-0">{{ metrics.total_processed }}</div>
+            <span class="text-muted small" style="font-size: 0.75rem;">Across all 4 modules</span>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card border-0 shadow-xs rounded-3 p-3">
+            <div class="text-muted small fw-semibold text-uppercase mb-1">Overall Automation Rate</div>
+            <div class="h3 fw-bold text-success mb-0">{{ metrics.automation_pct }}%</div>
+            <span class="text-muted small" style="font-size: 0.75rem;">Straight-through execution</span>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card border-0 shadow-xs rounded-3 p-3">
+            <div class="text-muted small fw-semibold text-uppercase mb-1">Avg AI Confidence</div>
+            <div class="h3 fw-bold text-primary mb-0">{{ metrics.avg_confidence }}%</div>
+            <span class="text-muted small" style="font-size: 0.75rem;">Extraction & triage quality</span>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card border-0 shadow-xs rounded-3 p-3">
+            <div class="text-muted small fw-semibold text-uppercase mb-1">Avg AI Speed</div>
+            <div class="h3 fw-bold text-info mb-0">{{ metrics.avg_processing_time_sec }}</div>
+            <span class="text-muted small" style="font-size: 0.75rem;">End-to-end inference latency</span>
+        </div>
+    </div>
+</div>
+
+<!-- ANALYTICS CHARTS GRID -->
+<div class="row g-3 mb-4">
+    <!-- Chart 1: Tasks by Department -->
+    <div class="col-12 col-lg-6">
+        <div class="card border-0 shadow-xs rounded-3 h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-building text-primary me-2"></i> Workload Distribution by Department</h6>
+                <span class="badge bg-light text-muted small">Department Routing</span>
+            </div>
+            <div class="card-body p-4">
+                <div style="height: 260px; position: relative;">
+                    <canvas id="analyticsDeptChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 2: Module Automation Efficiency -->
+    <div class="col-12 col-lg-6">
+        <div class="card border-0 shadow-xs rounded-3 h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-speedometer2 text-success me-2"></i> Automation Rate by Business Module (%)</h6>
+                <span class="badge bg-light text-muted small">Efficiency Score</span>
+            </div>
+            <div class="card-body p-4">
+                <div style="height: 260px; position: relative;">
+                    <canvas id="analyticsEfficiencyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 3: Confidence Score Buckets -->
+    <div class="col-12 col-lg-6">
+        <div class="card border-0 shadow-xs rounded-3 h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-bar-chart-fill text-info me-2"></i> AI Confidence Quality Buckets</h6>
+                <span class="badge bg-light text-muted small">Quality Assurance</span>
+            </div>
+            <div class="card-body p-4">
+                <div style="height: 260px; position: relative;">
+                    <canvas id="analyticsConfidenceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 4: Task Statuses Breakdown -->
+    <div class="col-12 col-lg-6">
+        <div class="card border-0 shadow-xs rounded-3 h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-pie-chart text-warning me-2"></i> Overall Task Status Breakdown</h6>
+                <span class="badge bg-light text-muted small">Current State</span>
+            </div>
+            <div class="card-body p-4">
+                <div style="height: 260px; position: relative;">
+                    <canvas id="analyticsStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/api/analytics/data')
+        .then(res => res.json())
+        .then(data => {
+            // 1. Dept Chart
+            new Chart(document.getElementById('analyticsDeptChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.departments.labels,
+                    datasets: [{
+                        label: 'Tasks Assigned',
+                        data: data.departments.data,
+                        backgroundColor: ['#6366f1', '#ec4899', '#3b82f6', '#f59e0b', '#64748b'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } }
+                }
+            });
+
+            // 2. Efficiency Chart
+            new Chart(document.getElementById('analyticsEfficiencyChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.module_efficiency.labels,
+                    datasets: [{
+                        label: 'Automation Rate %',
+                        data: data.module_efficiency.data,
+                        backgroundColor: '#10b981',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { min: 0, max: 100, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } }
+                }
+            });
+
+            // 3. Confidence Buckets Chart
+            new Chart(document.getElementById('analyticsConfidenceChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.confidence_buckets.labels,
+                    datasets: [{
+                        data: data.confidence_buckets.data,
+                        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#f97316', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+
+            // 4. Status Chart
+            new Chart(document.getElementById('analyticsStatusChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.statuses.labels,
+                    datasets: [{
+                        data: data.statuses.data,
+                        backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#64748b']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        });
+});
+</script>
+{% endblock %}

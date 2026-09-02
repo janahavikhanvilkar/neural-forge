@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard – SmartBiz AI Platform{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">Automation Dashboard</h3>
+        <p class="text-muted small mb-0">Real-time overview of AI document extraction, classification pipelines, and HITL verification queues</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <form action="{{ url_for('dashboard.load_demo_data') }}" method="POST" class="d-inline">
+            <button type="submit" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1 shadow-xs">
+                <i class="bi bi-magic"></i> Load Fresh Demo Data
+            </button>
+        </form>
+        <a href="{{ url_for('invoices.index') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-xs">
+            <i class="bi bi-plus-lg"></i> Process New Task
+        </a>
+    </div>
+</div>
+
+<!-- KPI SUMMARY CARDS -->
+<div class="row g-3 mb-4">
+    <!-- Card 1: Total Tasks & Automation Rate -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card stat-card border-0 shadow-xs rounded-3 h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Total Business Tasks</span>
+                    <div class="stat-icon-badge bg-primary-subtle text-primary rounded-3">
+                        <i class="bi bi-layers-fill"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-baseline gap-2 mb-2">
+                    <h2 class="fw-bold text-dark mb-0">{{ stats.total_tasks }}</h2>
+                    <span class="badge bg-success-subtle text-success small">
+                        <i class="bi bi-arrow-up-short"></i> {{ stats.automation_rate }}% Auto
+                    </span>
+                </div>
+                <div class="progress progress-xs mb-1">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: {{ stats.automation_rate }}%"></div>
+                </div>
+                <span class="text-muted small" style="font-size: 0.75rem;">{{ stats.completed_tasks }} completed straight-through</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 2: Invoices Processed -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card stat-card border-0 shadow-xs rounded-3 h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Invoices Audited</span>
+                    <div class="stat-icon-badge bg-success-subtle text-success rounded-3">
+                        <i class="bi bi-receipt-cutoff"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-baseline gap-2 mb-2">
+                    <h2 class="fw-bold text-dark mb-0">{{ stats.total_invoices }}</h2>
+                    <span class="badge bg-success-subtle text-success small">Finance Dept</span>
+                </div>
+                <div class="progress progress-xs mb-1">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: 85%"></div>
+                </div>
+                <span class="text-muted small" style="font-size: 0.75rem;">OCR, Math Check & Tax Extracted</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 3: Lead Intelligence -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card stat-card border-0 shadow-xs rounded-3 h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Leads Scored</span>
+                    <div class="stat-icon-badge bg-info-subtle text-info rounded-3">
+                        <i class="bi bi-fire"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-baseline gap-2 mb-2">
+                    <h2 class="fw-bold text-dark mb-0">{{ stats.total_leads }}</h2>
+                    <span class="badge bg-danger-subtle text-danger small">HOT/WARM/COLD</span>
+                </div>
+                <div class="progress progress-xs mb-1">
+                    <div class="progress-bar bg-info" role="progressbar" style="width: 90%"></div>
+                </div>
+                <span class="text-muted small" style="font-size: 0.75rem;">AI Sales Pipeline Prioritization</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 4: HITL Verification Queue -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card stat-card border-0 shadow-xs rounded-3 h-100 {% if stats.pending_hitl > 0 %}border-start border-warning border-4{% endif %}">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Pending Human Review</span>
+                    <div class="stat-icon-badge bg-warning-subtle text-warning rounded-3">
+                        <i class="bi bi-shield-exclamation"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-baseline gap-2 mb-2">
+                    <h2 class="fw-bold text-dark mb-0">{{ stats.pending_hitl }}</h2>
+                    {% if stats.pending_hitl > 0 %}
+                    <span class="badge bg-warning text-dark small animate-pulse">Action Required</span>
+                    {% else %}
+                    <span class="badge bg-success-subtle text-success small">Queue Clear</span>
+                    {% endif %}
+                </div>
+                <div class="progress progress-xs mb-1">
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ (stats.pending_hitl / max(1, stats.total_tasks) * 100) }}%"></div>
+                </div>
+                <a href="{{ url_for('hitl.index') }}" class="text-primary text-decoration-none small fw-semibold" style="font-size: 0.75rem;">
+                    Open HITL Verification Queue &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECONDARY METRICS PILL BAR -->
+<div class="row g-2 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="p-2 bg-white rounded-3 border shadow-xs d-flex align-items-center gap-3">
+            <div class="p-2 bg-light rounded-circle text-primary"><i class="bi bi-stars fs-5"></i></div>
+            <div>
+                <div class="small text-muted">Avg AI Confidence</div>
+                <div class="fw-bold text-dark">{{ stats.avg_confidence }}%</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="p-2 bg-white rounded-3 border shadow-xs d-flex align-items-center gap-3">
+            <div class="p-2 bg-light rounded-circle text-success"><i class="bi bi-file-earmark-person fs-5"></i></div>
+            <div>
+                <div class="small text-muted">Resumes Screened</div>
+                <div class="fw-bold text-dark">{{ stats.total_resumes }} Candidates</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="p-2 bg-white rounded-3 border shadow-xs d-flex align-items-center gap-3">
+            <div class="p-2 bg-light rounded-circle text-info"><i class="bi bi-headset fs-5"></i></div>
+            <div>
+                <div class="small text-muted">Support Tickets</div>
+                <div class="fw-bold text-dark">{{ stats.total_tickets }} Classified</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="p-2 bg-white rounded-3 border shadow-xs d-flex align-items-center gap-3">
+            <div class="p-2 bg-light rounded-circle text-warning"><i class="bi bi-speedometer2 fs-5"></i></div>
+            <div>
+                <div class="small text-muted">Automation Rate</div>
+                <div class="fw-bold text-dark">{{ stats.automation_rate }}% Straight-Thru</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 6 CHART.JS ANALYTICS GRIDS -->
+<div class="row g-3 mb-4">
+    <!-- Chart 1: Tasks by Category -->
+    <div class="col-12 col-lg-4">
+        <div class="card border-0 shadow-xs rounded-3 h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-pie-chart-fill text-primary me-2"></i> Tasks by Module</h6>
+                <span class="badge bg-light text-muted small">Live DB</span>
+            </div>
+            <div class="card-body p-3">
+                <div style="height: 220px; position: relative;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 2: Human vs Automated Ratio -->
+    <div class="col-12 col-lg-4">
+        <div class="card border-0 shadow-xs rounded-3 h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-robot text-success me-2"></i> Automated vs Human Review</h6>
+                <span class="badge bg-light text-muted small">HITL Engine</span>
+            </div>
+            <div class="card-body p-3">
+                <div style="height: 220px; position: relative;">
+                    <canvas id="humanVsAutoChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 3: AI Confidence Distribution -->
+    <div class="col-12 col-lg-4">
+        <div class="card border-0 shadow-xs rounded-3 h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-shield-shaded text-info me-2"></i> Confidence Distribution</h6>
+                <span class="badge bg-light text-muted small">Quality Score</span>
+            </div>
+            <div class="card-body p-3">
+                <div style="height: 220px; position: relative;">
+                    <canvas id="confidenceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 4: Lead Scoring Tiers -->
+    <div class="col-12 col-lg-4">
+        <div class="card border-0 shadow-xs rounded-3 h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-fire text-danger me-2"></i> Lead Scoring Breakdown</h6>
+                <span class="badge bg-light text-muted small">Sales Queue</span>
+            </div>
+            <div class="card-body p-3">
+                <div style="height: 220px; position: relative;">
+                    <canvas id="leadScoreChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 5: Support Tickets by Department -->
+    <div class="col-12 col-lg-4">
+        <div class="card border-0 shadow-xs rounded-3 h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-building text-warning me-2"></i> Tickets by Department</h6>
+                <span class="badge bg-light text-muted small">Auto-Routed</span>
+            </div>
+            <div class="card-body p-3">
+                <div style="height: 220px; position: relative;">
+                    <canvas id="ticketDeptChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 6: Tasks Over Time -->
+    <div class="col-12 col-lg-4">
+        <div class="card border-0 shadow-xs rounded-3 h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-graph-up text-primary me-2"></i> Automation Weekly Trend</h6>
+                <span class="badge bg-light text-muted small">7 Days</span>
+            </div>
+            <div class="card-body p-3">
+                <div style="height: 220px; position: relative;">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- BOTTOM SECTION: HITL CALLOUT & ACTIVITY LOG -->
+<div class="row g-3">
+    <!-- Pending HITL Queue Preview -->
+    <div class="col-12 col-xl-6">
+        <div class="card border-0 shadow-xs rounded-3 h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge rounded-circle bg-warning text-dark p-2"><i class="bi bi-shield-exclamation"></i></span>
+                    <h6 class="fw-bold text-dark mb-0">Pending Human-in-the-Loop Reviews</h6>
+                </div>
+                <a href="{{ url_for('hitl.index') }}" class="btn btn-sm btn-outline-primary">View All Queue</a>
+            </div>
+            <div class="card-body p-0">
+                {% if pending_hitl_items %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light text-muted small text-uppercase">
+                            <tr>
+                                <th class="ps-3">Task</th>
+                                <th>Flag / Reason</th>
+                                <th>Confidence</th>
+                                <th class="pe-3 text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y small">
+                            {% for item in pending_hitl_items %}
+                            <tr>
+                                <td class="ps-3">
+                                    <span class="badge bg-secondary-subtle text-secondary text-uppercase fw-semibold">{{ item.task_type }}</span>
+                                    <div class="fw-semibold text-dark mt-1">{{ item.task_title }}</div>
+                                </td>
+                                <td>
+                                    <span class="text-danger small"><i class="bi bi-exclamation-circle me-1"></i>{{ item.reason[:50] }}...</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-warning-subtle text-warning fw-bold">{{ item.confidence }}%</span>
+                                </td>
+                                <td class="pe-3 text-end">
+                                    <a href="{{ url_for('hitl.index') }}" class="btn btn-sm btn-primary">
+                                        Review <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center text-muted">
+                    <i class="bi bi-check2-circle text-success fs-1 mb-2 d-block"></i>
+                    <p class="mb-0 fw-semibold">No pending verification items!</p>
+                    <small>All automated workflows are operating at high confidence.</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Audit Log -->
+    <div class="col-12 col-xl-6">
+        <div class="card border-0 shadow-xs rounded-3 h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-activity text-muted me-2"></i> Recent Automation Activity Log</h6>
+                <span class="badge bg-light text-muted small">Live Trail</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light text-muted small text-uppercase">
+                            <tr>
+                                <th class="ps-3">Timestamp</th>
+                                <th>User / Source</th>
+                                <th>Module</th>
+                                <th>Event Description</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y small">
+                            {% for log in recent_activities %}
+                            <tr>
+                                <td class="ps-3 text-muted font-monospace" style="font-size: 0.75rem;">
+                                    {{ log.created_at.strftime('%H:%M:%S') }}
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-dark">{{ log.user_name }}</span>
+                                    <span class="badge bg-light text-muted" style="font-size: 0.65rem;">{{ log.role }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary-subtle text-primary">{{ log.module }}</span>
+                                </td>
+                                <td>
+                                    <span class="text-dark">{{ log.description }}</span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">No activity logs recorded yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

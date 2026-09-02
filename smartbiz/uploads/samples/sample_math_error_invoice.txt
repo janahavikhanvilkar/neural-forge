@@ -1,0 +1,15 @@
+SUMMIT LOGISTICS & FREIGHT CORP
+Invoice #: INV-2026-9041
+Date: August 28, 2026
+Due Date: September 28, 2026
+Bill To: SmartBiz Global
+
+Line Items:
+- Cross-docking and shipping services: $4,200.00
+- Warehouse handling fee: $800.00
+
+Subtotal: $5,000.00
+Sales Tax (8%): $400.00
+Total Amount Due: $5,850.00  (Notice: Math calculation error, 5000 + 400 != 5850)
+
+Payment via Wire Transfer or Corporate Check.

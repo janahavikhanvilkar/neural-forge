@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Lead Scoring & Routing – SmartBiz AI Platform{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">AI Lead Scoring & Prioritization</h3>
+        <p class="text-muted small mb-0">Multi-factor B2B lead intelligence, deal size qualification, automated HOT lead routing to Sales</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-xs" data-bs-toggle="modal" data-bs-target="#createLeadModal">
+            <i class="bi bi-plus-circle-fill"></i> Score New Lead
+        </button>
+    </div>
+</div>
+
+<!-- STATS CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card stat-card border-0 shadow-xs rounded-3 p-3">
+            <div class="text-muted small fw-semibold text-uppercase mb-1">Total Leads Ingested</div>
+            <div class="h3 fw-bold text-dark mb-0">{{ total_leads }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card border-0 shadow-xs rounded-3 p-3 border-start border-danger border-4">
+            <div class="text-muted small fw-semibold text-uppercase mb-1">🔥 HOT Leads (80-100)</div>
+            <div class="h3 fw-bold text-danger mb-0">{{ hot_leads }}</div>
+            <span class="text-muted small" style="font-size: 0.75rem;">Routed to Sales</span>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card border-0 shadow-xs rounded-3 p-3">
+            <div class="text-muted small fw-semibold text-uppercase mb-1">☀️ WARM Leads (60-79)</div>
+            <div class="h3 fw-bold text-warning mb-0">{{ warm_leads }}</div>
+            <span class="text-muted small" style="font-size: 0.75rem;">Nurture Queue</span>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card border-0 shadow-xs rounded-3 p-3">
+            <div class="text-muted small fw-semibold text-uppercase mb-1">❄️ COLD Leads (0-59)</div>
+            <div class="h3 fw-bold text-secondary mb-0">{{ cold_leads }}</div>
+            <span class="text-muted small" style="font-size: 0.75rem;">Marketing Drip</span>
+        </div>
+    </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="card border-0 shadow-xs rounded-3 mb-4">
+    <div class="card-body p-3">
+        <div class="row g-2 align-items-center justify-content-between">
+            <div class="col-12 col-md-auto">
+                <div class="btn-group btn-group-sm" role="group">
+                    <a href="{{ url_for('leads.index', category='all') }}" class="btn btn-outline-secondary {% if category_filter == 'all' %}active{% endif %}">All Leads ({{ total_leads }})</a>
+                    <a href="{{ url_for('leads.index', category='hot') }}" class="btn btn-outline-secondary {% if category_filter == 'hot' %}active{% endif %}">🔥 HOT</a>
+                    <a href="{{ url_for('leads.index', category='warm') }}" class="btn btn-outline-secondary {% if category_filter == 'warm' %}active{% endif %}">☀️ WARM</a>
+                    <a href="{{ url_for('leads.index', category='cold') }}" class="btn btn-outline-secondary {% if category_filter == 'cold' %}active{% endif %}">❄️ COLD</a>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <form method="GET" action="{{ url_for('leads.index') }}">
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="q" class="form-control" placeholder="Search lead name, company, email..." value="{{ search_query }}">
+                        <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- LEADS TABLE -->
+<div class="card border-0 shadow-xs rounded-3 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light text-muted small text-uppercase">
+                <tr>
+                    <th class="ps-3">Lead & Contact</th>
+                    <th>Company & Size</th>
+                    <th>Budget</th>
+                    <th>Product & Source</th>
+                    <th>Engagement</th>
+                    <th>AI Score</th>
+                    <th>Category</th>
+                    <th>Routing</th>
+                    <th>Status</th>
+                    <th class="pe-3 text-end">AI Reasoning</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y small">
+                {% for lead in leads %}
+                <tr>
+                    <td class="ps-3">
+                        <div class="fw-bold text-dark">{{ lead.name }}</div>
+                        <div class="text-muted" style="font-size: 0.75rem;">{{ lead.email }}</div>
+                    </td>
+                    <td>
+                        <div class="fw-semibold text-dark">{{ lead.company }}</div>
+                        <span class="badge bg-light text-muted border">{{ lead.industry }} &bull; {{ lead.company_size }}</span>
+                    </td>
+                    <td>
+                        <div class="fw-bold text-dark font-monospace">${{ "{:,.0f}".format(lead.budget) }}</div>
+                    </td>
+                    <td>
+                        <div class="text-dark">{{ lead.product }}</div>
+                        <div class="text-muted" style="font-size: 0.75rem;">via {{ lead.source }}</div>
+                    </td>
+                    <td>
+                        <span class="badge {% if lead.engagement == 'High' %}bg-success-subtle text-success{% elif lead.engagement == 'Medium' %}bg-info-subtle text-info{% else %}bg-secondary-subtle text-secondary{% endif %}">
+                            {{ lead.engagement }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge {% if lead.score >= 80 %}bg-danger text-white{% elif lead.score >= 60 %}bg-warning text-dark{% else %}bg-secondary text-white{% endif %} fs-6 fw-bold">
+                                {{ lead.score }}
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge {% if lead.category == 'HOT' %}bg-danger text-white{% elif lead.category == 'WARM' %}bg-warning text-dark{% else %}bg-secondary text-white{% endif %} fw-bold">
+                            {{ lead.category }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-primary-subtle text-primary border">{{ lead.assigned_department }}</span>
+                    </td>
+                    <td>
+                        <form action="{{ url_for('leads.update_status', lead_id=lead.id) }}" method="POST" class="d-inline">
+                            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()" style="width: 110px;">
+                                <option value="New" {% if lead.status == 'New' %}selected{% endif %}>New</option>
+                                <option value="In Review" {% if lead.status == 'In Review' %}selected{% endif %}>In Review</option>
+                                <option value="Qualified" {% if lead.status == 'Qualified' %}selected{% endif %}>Qualified</option>
+                                <option value="Contacted" {% if lead.status == 'Contacted' %}selected{% endif %}>Contacted</option>
+                                <option value="Converted" {% if lead.status == 'Converted' %}selected{% endif %}>Converted</option>
+                                <option value="Disqualified" {% if lead.status == 'Disqualified' %}selected{% endif %}>Disqualified</option>
+                            </select>
+                        </form>
+                    </td>
+                    <td class="pe-3 text-end">
+                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#reasonModal{{ lead.id }}">
+                            <i class="bi bi-info-circle"></i> AI Insights
+                        </button>
+
+                        <!-- Lead Reasoning Modal -->
+                        <div class="modal fade text-start" id="reasonModal{{ lead.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow-lg rounded-4">
+                                    <div class="modal-header border-bottom p-3">
+                                        <h5 class="modal-title fw-bold">
+                                            <i class="bi bi-stars text-primary me-2"></i> Lead Scoring Insights: {{ lead.name }}
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body p-4">
+                                        <div class="d-flex align-items-center justify-content-between mb-3 p-3 bg-light rounded-3">
+                                            <div>
+                                                <div class="small text-muted text-uppercase">AI Lead Score</div>
+                                                <div class="h3 fw-bold mb-0 {% if lead.score >= 80 %}text-danger{% elif lead.score >= 60 %}text-warning{% else %}text-secondary{% endif %}">
+                                                    {{ lead.score }} / 100 ({{ lead.category }})
+                                                </div>
+                                            </div>
+                                            <span class="badge bg-primary fs-6">{{ lead.assigned_department }} Dept</span>
+                                        </div>
+
+                                        <h6 class="fw-bold mb-2">Key Scoring Factors:</h6>
+                                        <ul class="list-group list-group-flush mb-3 small">
+                                            {% for r in lead.get_reasons_list() %}
+                                            <li class="list-group-item px-0 border-0 d-flex align-items-center gap-2">
+                                                <i class="bi bi-check-circle-fill text-success"></i> {{ r }}
+                                            </li>
+                                            {% endfor %}
+                                        </ul>
+
+                                        <div class="p-3 bg-primary-subtle rounded-3 text-primary small">
+                                            <strong>Recommended Action:</strong><br>
+                                            {{ lead.recommended_action }}
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-top p-3">
+                                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="10" class="text-center py-5 text-muted">
+                        <i class="bi bi-bullseye fs-1 d-block mb-2 text-muted-sidebar"></i>
+                        <h5>No leads found</h5>
+                        <p class="small mb-3">Add a new lead or load demo data to view AI scoring in action.</p>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createLeadModal">
+                            Score Lead Now
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- CREATE LEAD MODAL -->
+<div class="modal fade" id="createLeadModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom p-3">
+                <h5 class="modal-title fw-bold"><i class="bi bi-fire text-danger me-2"></i> Ingest & Score New Lead</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('leads.create') }}" method="POST">
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-semibold">Lead Contact Name</label>
+                            <input type="text" name="name" class="form-control" placeholder="e.g. Jessica Sterling" required>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-semibold">Corporate Email</label>
+                            <input type="email" name="email" class="form-control" placeholder="jessica@apexenterprises.com" required>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-semibold">Company Name</label>
+                            <input type="text" name="company" class="form-control" placeholder="Apex Enterprises Inc." required>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-semibold">Industry</label>
+                            <input type="text" name="industry" class="form-control" placeholder="e.g. FinTech, Healthcare, Logistics">
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label class="form-label small fw-semibold">Company Size</label>
+                            <select name="company_size" class="form-select">
+                                <option value="1000+">1000+ (Enterprise)</option>
+                                <option value="201-1000">201-1000 (Mid-Market)</option>
+                                <option value="51-200" selected>51-200 (Growth)</option>
+                                <option value="11-50">11-50 (Small Business)</option>
+                                <option value="1-10">1-10 (Startup / Solo)</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label small fw-semibold">Estimated Budget ($ USD)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="budget" class="form-control" placeholder="50000" value="50000">
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label small fw-semibold">Engagement Level</label>
+                            <select name="engagement" class="form-select">
+                                <option value="High" selected>High (Requested Demo)</option>
+                                <option value="Medium">Medium (Visited Pricing)</option>
+                                <option value="Low">Low (Passive Newsletter)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label class="form-label small fw-semibold">Product Interest</label>
+                            <input type="text" name="product" class="form-control" placeholder="Enterprise Automation Suite" value="Enterprise Automation Suite">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label small fw-semibold">Acquisition Source</label>
+                            <select name="source" class="form-select">
+                                <option value="Inbound Demo Request" selected>Inbound Demo Request</option>
+                                <option value="Webinar Attendee">Webinar Attendee</option>
+                                <option value="Referral">Referral</option>
+                                <option value="Website Organic">Website Organic</option>
+                                <option value="Paid Ad">Paid Ad</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label small fw-semibold">Previous Interaction</label>
+                            <input type="text" name="previous_interaction" class="form-control" placeholder="Attended AI Webinar" value="Requested Executive Demo">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top p-3">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary px-4 fw-semibold">
+                        Score Lead & Route <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

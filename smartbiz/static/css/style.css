@@ -1,0 +1,226 @@
+:root {
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --primary-light: #e0e7ff;
+    --sidebar-bg: #0f172a;
+    --sidebar-hover: #1e293b;
+    --sidebar-text: #94a3b8;
+    --sidebar-active: #38bdf8;
+    --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --card-shadow-hover: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #1e293b;
+    background-color: #f8fafc;
+    letter-spacing: -0.01em;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    width: 260px;
+    background-color: var(--sidebar-bg);
+    min-height: 100vh;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1040;
+}
+
+.brand-icon-box {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #6366f1, #38bdf8);
+}
+
+.text-primary-gradient {
+    background: linear-gradient(135deg, #818cf8, #38bdf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.bg-dark-accent {
+    background-color: #090e1a;
+}
+
+.text-muted-sidebar {
+    color: #64748b;
+}
+
+.sidebar-nav .nav-link {
+    color: var(--sidebar-text);
+    font-weight: 500;
+    font-size: 0.875rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 0.5rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.sidebar-nav .nav-link:hover {
+    color: #f8fafc;
+    background-color: var(--sidebar-hover);
+}
+
+.sidebar-nav .nav-link.active {
+    color: #ffffff;
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+}
+
+.sidebar-nav .nav-link i {
+    font-size: 1.05rem;
+}
+
+/* Cards & Layout */
+.shadow-xs {
+    box-shadow: var(--card-shadow);
+}
+
+.shadow-2xl {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stat-card:hover {
+    box-shadow: var(--card-shadow-hover);
+}
+
+.stat-icon-badge {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+/* Progress bar helpers */
+.progress-xs {
+    height: 6px;
+    border-radius: 4px;
+}
+
+/* Search bar styling */
+.search-input-group {
+    width: 320px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    pointer-events: none;
+}
+
+.search-bar-input {
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.search-bar-input:focus {
+    background-color: #ffffff;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+.search-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: #ffffff;
+    z-index: 1050;
+    margin-top: 6px;
+    max-height: 360px;
+    overflow-y: auto;
+}
+
+/* User avatar */
+.user-avatar-circle {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+}
+
+/* Pulse animation for active indicator */
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.status-indicator-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Workflow step cards */
+.step-num-badge {
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+    font-size: 0.8rem;
+}
+
+.workflow-arrow {
+    padding: 0 0.5rem;
+}
+
+/* Dropzone */
+.upload-dropzone {
+    border: 2px dashed #cbd5e1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.upload-dropzone:hover {
+    border-color: var(--primary);
+    background-color: #f8fafc;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+    .sidebar {
+        position: fixed;
+        left: -260px;
+        top: 0;
+        bottom: 0;
+    }
+    .sidebar.show {
+        left: 0;
+    }
+    .search-input-group {
+        width: 200px;
+    }
+}
